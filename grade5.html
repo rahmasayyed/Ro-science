@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Grade 5 Page</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background: url('background.jpg') no-repeat center center fixed;
+      background-size: cover;
+      color: white;
+      direction: ltr;
+    }
+    .container {
+      width: 400px;
+      background-color: rgba(0, 0, 0, 0.75);
+      padding: 30px;
+      margin: 80px auto;
+      border-radius: 15px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.6);
+      text-align: center;
+    }
+    h1 { margin-bottom: 25px; }
+    button {
+      padding: 12px 20px;
+      margin: 10px auto;
+      width: 80%;
+      font-size: 16px;
+      border: none;
+      border-radius: 10px;
+      background-color:#8B0000;
+      color: white;
+      cursor: pointer;
+    }
+    #lessonsList button, #examsList button {
+      background-color:#4CAF50;
+    }
+    #videoContainer {
+      margin-top: 25px;
+    }
+    .whatsapp-link {
+      margin-top: 30px;
+      font-size: 18px;
+      color: #25D366;
+    }
+    .whatsapp-link a {
+      color: #25D366;
+      text-decoration: underline;
+      font-weight: bold;
+    }
+    .video-wrapper {
+      position: relative;
+      width: 100%;
+      height: 350px;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .video-wrapper iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      border-radius: 10px;
+    }
+    .transparent-cover {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 50%;
+      background-color: rgba(0, 0, 0, 0.01);
+      z-index: 10;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Welcome Grade 5</h1>
+    <button onclick="showLessons()">Lessons</button>
+    <button onclick="showExams()">Exams</button>
+
+    <div id="lessonsList"></div>
+    <div id="examsList"></div>
+    <div id="videoContainer"></div>
+
+    <div class="whatsapp-link">
+      📢 Join the <strong>Grade 5 WhatsApp Group</strong> for updates:<br>
+      <a href="https://chat.whatsapp.com/KUKkeJa5g9n5I7L8Ge7lSV?mode=ac_t" target="_blank">
+        Click here to join 💬
+      </a>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyB1yOD0rQw0CEeyV5vI_mkwMQij7HdtiQs",
+      authDomain: "myeduapp-2bf22.firebaseapp.com",
+      databaseURL: "https://myeduapp-2bf22-default-rtdb.firebaseio.com",
+      projectId: "myeduapp-2bf22",
+      storageBucket: "myeduapp-2bf22.appspot.com",
+      messagingSenderId: "851199925268",
+      appId: "1:851199925268:web:deb4ce8ad14fb4e1cf5b01"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    let parentNumber = localStorage.getItem('parentNumber') || prompt("Please enter parent's number:");
+    if (parentNumber) localStorage.setItem('parentNumber', parentNumber);
+
+    let studentName = localStorage.getItem('studentName') || prompt("Please enter student name:");
+    if (studentName) localStorage.setItem('studentName', studentName);
+
+    let studentNumber = localStorage.getItem('studentNumber') || prompt("Please enter student number:");
+    if (studentNumber) localStorage.setItem('studentNumber', studentNumber);
+
+    function showLessons() {
+      document.getElementById('lessonsList').innerHTML = 'Loading lessons...';
+      document.getElementById('examsList').innerHTML = '';
+      db.ref('videos/grade 5').once('value', snapshot => {
+        const data = snapshot.val();
+        const container = document.getElementById('lessonsList');
+        container.innerHTML = '';
+        if (data) {
+          Object.keys(data).forEach(name => {
+            const btn = document.createElement('button');
+            btn.textContent = name;
+            btn.onclick = () => requestCodeAndPlay(name, data[name]);
+            container.appendChild(btn);
+          });
+        } else {
+          container.innerHTML = 'No lessons found.';
+        }
+      });
+    }
+
+    function showExams() {
+      document.getElementById('examsList').innerHTML = 'Loading exams...';
+      document.getElementById('lessonsList').innerHTML = '';
+      db.ref('exams/5').once('value', snapshot => {
+        const data = snapshot.val();
+        const container = document.getElementById('examsList');
+        container.innerHTML = '';
+        if (data) {
+          Object.keys(data).forEach(name => {
+            const btn = document.createElement('button');
+            btn.textContent = name;
+            btn.onclick = () => window.open(data[name], '_blank');
+            container.appendChild(btn);
+          });
+        } else {
+          container.innerHTML = 'No exams found.';
+        }
+      });
+    }
+
+    function requestCodeAndPlay(lessonName, videoId) {
+      const code = prompt("Enter your access code:");
+      if (!code) return;
+
+      db.ref(`codes/${code}`).once('value', snapshot => {
+        const value = snapshot.val();
+        if (value === "taken") {
+          db.ref(`codes/${code}`).set("false");
+
+          if (!videoId || videoId.includes("http") || videoId.length < 20) {
+            document.getElementById('videoContainer').innerHTML = `
+              <div style="color: red; font-weight: bold;">
+                ⚠️ This video cannot be displayed. Please check the link or Google Drive sharing settings.
+              </div>
+            `;
+            return;
+          }
+
+          const videoUrl = `https://drive.google.com/file/d/${videoId}/preview`;
+          const iframe = document.createElement('iframe');
+          iframe.src = videoUrl;
+          iframe.allow = "autoplay";
+          iframe.allowFullscreen = true;
+          iframe.style.display = "none";
+
+          iframe.onload = () => {
+            iframe.style.display = "block";
+          };
+
+          iframe.onerror = () => {
+            document.getElementById('videoContainer').innerHTML = `
+              <div style="color: red; font-weight: bold;">
+                ⚠️ Unable to load video at the moment. Please try again later.
+              </div>
+            `;
+          };
+
+          const wrapper = document.createElement('div');
+          wrapper.className = "video-wrapper";
+          wrapper.appendChild(iframe);
+
+          const overlay = document.createElement('div');
+          overlay.className = "transparent-cover";
+
+          wrapper.appendChild(overlay);
+          document.getElementById('videoContainer').innerHTML = '';
+          document.getElementById('videoContainer').appendChild(wrapper);
+
+          const log = {
+            studentName: localStorage.getItem('studentName'),
+            studentNumber: localStorage.getItem('studentNumber'),
+            lessonName,
+            codeUsed: code,
+            dateTime: new Date().toLocaleString()
+          };
+
+          db.ref(`watchedLessons/grade5/${parentNumber}/${code}`).set(log);
+        } else {
+          alert("❌ This code is invalid or already used.");
+        }
+      });
+    }
+  </script>
+</body>
+</html>

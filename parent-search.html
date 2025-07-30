@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <title>بحث عن طالب</title>
+  <style>
+    body {
+      background-color: #f4f4f4;
+      font-family: 'Segoe UI', sans-serif;
+      padding: 40px;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background: white;
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    input {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 15px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background-color: #8B0000;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 18px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #a30000;
+    }
+    .result {
+      margin-top: 20px;
+      padding: 15px;
+      background-color: #f9f9f9;
+      border-radius: 10px;
+    }
+    .student-card {
+      border: 1px solid #ccc;
+      margin-bottom: 15px;
+      padding: 15px;
+      border-radius: 10px;
+      background-color: #fff;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>بحث عن الطالب برقم ولي الأمر</h1>
+    <input type="text" id="parentNumberInput" placeholder="اكتب رقم ولي الأمر">
+    <button onclick="searchStudent()">بحث</button>
+
+    <div class="result" id="result"></div>
+  </div>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyB1yOD0rQw0CEeyV5vI_mkwMQij7HdtiQs",
+      authDomain: "myeduapp-2bf22.firebaseapp.com",
+      databaseURL: "https://myeduapp-2bf22-default-rtdb.firebaseio.com",
+      projectId: "myeduapp-2bf22",
+      storageBucket: "myeduapp-2bf22.appspot.com",
+      messagingSenderId: "851199925268",
+      appId: "1:851199925268:web:deb4ce8ad14fb4e1cf5b01"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    function searchStudent() {
+      const parentNumber = document.getElementById('parentNumberInput').value.trim();
+      const resultDiv = document.getElementById('result');
+      resultDiv.innerHTML = "";
+
+      if (!parentNumber) {
+        resultDiv.innerHTML = "<p>⚠️ يرجى إدخال رقم ولي الأمر.</p>";
+        return;
+      }
+
+      const grades = ['4', '5', '6', 'prep1', 'prep2', 'prep3'];
+      let results = [];
+      let queriesDone = 0;
+
+      grades.forEach(grade => {
+        db.ref(`registrations/${grade}`).once("value", snapshot => {
+          snapshot.forEach(child => {
+            const data = child.val();
+            if (data.parentNumber === parentNumber) {
+              results.push(data);
+            }
+          });
+
+          queriesDone++;
+          if (queriesDone === grades.length) {
+            if (results.length === 0) {
+              resultDiv.innerHTML = "<p>🙁 لم يتم العثور على طلاب بهذا الرقم.</p>";
+            } else {
+              // ترتيب حسب timestamp تنازلي
+              results.sort((a, b) => {
+                const timeA = new Date(a.timestamp).getTime();
+                const timeB = new Date(b.timestamp).getTime();
+                return timeB - timeA;
+              });
+
+              results.forEach(data => {
+                const studentCard = `
+                  <div class="student-card">
+                    <p><strong>👦 اسم الطالب:</strong> ${data.studentName}</p>
+                    <p><strong>📛 رقم الطالب:</strong> ${data.studentNumber}</p>
+                    <p><strong>👨‍👩‍👧‍👦 اسم ولي الأمر:</strong> ${data.parentName}</p>
+                    <p><strong>📞 رقم ولي الأمر:</strong> ${data.parentNumber}</p>
+                    <p><strong>📘 الصف:</strong> ${data.grade}</p>
+                    <p><strong>🕒 وقت التسجيل:</strong> ${data.timestamp}</p>
+                  </div>`;
+                resultDiv.innerHTML += studentCard;
+              });
+            }
+          }
+        });
+      });
+    }
+  </script>
+
+</body>
+</html>
