@@ -19,9 +19,9 @@
     }
     h1 {
       text-align: center;
-      margin-bottom: 30px;
+      margin-bottom: 20px;
     }
-    input, button {
+    input, button, select {
       width: 100%;
       padding: 12px;
       margin-bottom: 15px;
@@ -41,11 +41,23 @@
       background-color: #a30000;
     }
     .student-card {
-      background-color: #fff;
       padding: 15px;
       margin-top: 20px;
       border-radius: 10px;
       border: 1px solid #ccc;
+    }
+    .lesson-card {
+      background-color: #fff;
+    }
+    .exam-card {
+      background-color: #fff8dc;
+    }
+    .summary {
+      background-color: #eee;
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      font-size: 16px;
     }
   </style>
 </head>
@@ -54,7 +66,14 @@
 <div class="container">
   <h1>Search by Parent Number</h1>
   <input type="text" id="parentNumberInput" placeholder="Enter parent number">
+  <select id="filterType">
+    <option value="all">Show All</option>
+    <option value="lesson">Lessons Only</option>
+    <option value="exam">Exams Only</option>
+  </select>
   <button onclick="searchStudent()">Search</button>
+
+  <div id="summary" class="summary" style="display:none;"></div>
   <div id="result"></div>
 </div>
 
@@ -77,8 +96,11 @@
 
   function searchStudent() {
     const parentNumber = document.getElementById('parentNumberInput').value.trim();
+    const filterType = document.getElementById('filterType').value;
     const resultDiv = document.getElementById('result');
+    const summaryDiv = document.getElementById('summary');
     resultDiv.innerHTML = "";
+    summaryDiv.style.display = "none";
 
     if (!parentNumber) {
       resultDiv.innerHTML = "<p>⚠️ Please enter a parent number.</p>";
@@ -86,32 +108,57 @@
     }
 
     const levels = ["grade4", "grade5", "grade6", "prep1", "prep2", "prep3"];
-    let found = false;
-    let output = "";
+    let allLogs = [];
 
     Promise.all(levels.map(level => {
       return db.ref(`watchedLessons/${level}/${parentNumber}`).once("value")
         .then(snapshot => {
           const data = snapshot.val();
           if (data) {
-            found = true;
             const displayLevel = level.replace("grade", "Grade ").replace("prep", "Prep ");
             Object.values(data).forEach(log => {
-              output += `
-                <div class="student-card">
-                  <p><strong>👦 Student Name:</strong> ${log.studentName}</p>
-                  <p><strong>📛 Student Number:</strong> ${log.studentNumber}</p>
-                  <p><strong>🎞️ Lesson Watched:</strong> ${log.lessonName}</p>
-                  <p><strong>⏰ Watch Time:</strong> ${log.dateTime}</p>
-                  <p><strong>🔑 Used Code:</strong> ${log.codeUsed}</p>
-                  <p><strong>🏫 Grade Level:</strong> ${displayLevel}</p>
-                </div>
-              `;
+              log.levelName = displayLevel;
+              allLogs.push(log);
             });
           }
         });
     })).then(() => {
-      resultDiv.innerHTML = found ? output : "<p>🙁 No data found for this parent number.</p>";
+      if (allLogs.length === 0) {
+        resultDiv.innerHTML = "<p>🙁 No data found for this parent number.</p>";
+        return;
+      }
+
+      let lessonCount = 0;
+      let examCount = 0;
+      let output = "";
+
+      allLogs
+        .filter(log => {
+          if (filterType === "lesson") return log.type !== "exam";
+          if (filterType === "exam") return log.type === "exam";
+          return true;
+        })
+        .sort((a, b) => new Date(b.dateTime) - new Date(a.dateTime))
+        .forEach(log => {
+          const isExam = log.type === "exam";
+          if (isExam) examCount++;
+          else lessonCount++;
+
+          output += `
+            <div class="student-card ${isExam ? 'exam-card' : 'lesson-card'}">
+              <p><strong>👦 Student Name:</strong> ${log.studentName}</p>
+              <p><strong>📛 Student Number:</strong> ${log.studentNumber}</p>
+              <p><strong>${isExam ? "📝 Exam Taken" : "🎞️ Lesson Watched"}:</strong> ${log.lessonName}</p>
+              <p><strong>⏰ ${isExam ? "Exam Time" : "Watch Time"}:</strong> ${log.dateTime}</p>
+              <p><strong>🔑 Used Code:</strong> ${log.codeUsed}</p>
+              <p><strong>🏫 Grade Level:</strong> ${log.levelName}</p>
+            </div>
+          `;
+        });
+
+      summaryDiv.innerHTML = `📊 Total: <strong>${lessonCount}</strong> lessons, <strong>${examCount}</strong> exams`;
+      summaryDiv.style.display = "block";
+      resultDiv.innerHTML = output;
     });
   }
 </script>
