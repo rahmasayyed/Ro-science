@@ -3,6 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <title>Student Registration</title>
+  
+  <!-- ✅ Favicon added -->
+  <link rel="icon" type="image/png" href="logo.png">
+  <link rel="apple-touch-icon" href="logo.png">
+
   <style>
     body {
       background-image: url("background.jpg");
@@ -36,10 +41,17 @@
       padding: 30px;
       border-radius: 20px;
       box-shadow: 0 0 20px #000;
+      text-align: center;
+    }
+
+    .logo {
+      display: block;
+      margin: 0 auto 20px;
+      max-width: 150px;
+      height: auto;
     }
 
     h1 {
-      text-align: center;
       margin-bottom: 25px;
       font-size: 28px;
     }
@@ -47,6 +59,7 @@
     label {
       display: block;
       margin: 15px 0 5px;
+      text-align: left;
     }
 
     input, select {
@@ -80,6 +93,9 @@
   <a href="search-student.html" class="parent-control-button">Parent Control</a>
 
   <div class="container">
+    <!-- ✅ Logo added -->
+    <img src="logo.png" alt="App Logo" class="logo">
+
     <h1>Student Registration</h1>
     <form id="registrationForm">
       <label for="studentName">Student Name:</label>
@@ -109,7 +125,7 @@
     </form>
   </div>
 
-  <!-- Firebase SDK -->
+  <!-- ✅ Firebase SDK -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
     import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
