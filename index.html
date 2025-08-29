@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>R.S science</title>
+  <title>Student Registration</title>
   <style>
     body {
       background-image: url("background.jpg");
@@ -80,8 +80,8 @@
   <a href="search-student.html" class="parent-control-button">Parent Control</a>
 
   <div class="container">
-    <h1>Welcome to R.S science</h1>
-    <form id="registrationForm" onsubmit="submitForm(event)">
+    <h1>Student Registration</h1>
+    <form id="registrationForm">
       <label for="studentName">Student Name:</label>
       <input type="text" id="studentName" required>
 
@@ -110,9 +110,10 @@
   </div>
 
   <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-  <script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+    import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+
     const firebaseConfig = {
       apiKey: "AIzaSyB1yOD0rQw0CEeyV5vI_mkwMQij7HdtiQs",
       authDomain: "myeduapp-2bf22.firebaseapp.com",
@@ -123,12 +124,10 @@
       appId: "1:851199925268:web:deb4ce8ad14fb4e1cf5b01"
     };
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-  </script>
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
 
-  <script>
-    function submitForm(event) {
+    document.getElementById("registrationForm").addEventListener("submit", async (event) => {
       event.preventDefault();
 
       const submitButton = document.getElementById("submitBtn");
@@ -173,34 +172,32 @@
         timestamp
       };
 
-      db.ref(`registrations/${grade}`).push(registrationData)
-        .then(() => {
-          alert("✅ تم التسجيل بنجاح!");
-          localStorage.setItem("lastSubmitTime", now);
+      try {
+        await push(ref(db, `registrations/${grade}`), registrationData);
+        alert("✅ تم التسجيل بنجاح!");
+        localStorage.setItem("lastSubmitTime", now);
 
-          localStorage.setItem('studentName', studentName);
-          localStorage.setItem('studentNumber', studentNumber);
-          localStorage.setItem('parentName', parentName);
-          localStorage.setItem('parentNumber', parentNumber);
-          localStorage.setItem('grade', grade);
+        localStorage.setItem('studentName', studentName);
+        localStorage.setItem('studentNumber', studentNumber);
+        localStorage.setItem('parentName', parentName);
+        localStorage.setItem('parentNumber', parentNumber);
+        localStorage.setItem('grade', grade);
 
-          switch (grade) {
-            case "4": window.location.href = "grade4.html"; break;
-            case "5": window.location.href = "grade5.html"; break;
-            case "6": window.location.href = "grade6.html"; break;
-            case "prep1": window.location.href = "prep1.html"; break;
-            case "prep2": window.location.href = "prep2.html"; break;
-            case "prep3": window.location.href = "prep3.html"; break;
-            default: alert("Please select a valid grade.");
-          }
-        })
-        .catch(error => {
-          alert("❌ حدث خطأ أثناء التسجيل");
-          console.error(error);
-          submitButton.disabled = false;
-        });
-    }
+        switch (grade) {
+          case "4": window.location.href = "grade4.html"; break;
+          case "5": window.location.href = "grade5.html"; break;
+          case "6": window.location.href = "grade6.html"; break;
+          case "prep1": window.location.href = "prep1.html"; break;
+          case "prep2": window.location.href = "prep2.html"; break;
+          case "prep3": window.location.href = "prep3.html"; break;
+          default: alert("Please select a valid grade.");
+        }
+      } catch (error) {
+        alert("❌ حدث خطأ أثناء التسجيل");
+        console.error(error);
+        submitButton.disabled = false;
+      }
+    });
   </script>
-
 </body>
 </html>
