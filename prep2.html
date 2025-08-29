@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Prep 2 Page</title>
+  <!-- ✅ Favicon added -->
+  <link rel="icon" type="image/png" href="logo.png">
+  <link rel="apple-touch-icon" href="logo.png">
+  <title>prep 2 Page</title>
   <style>
     body {
       margin: 0;
@@ -76,9 +79,8 @@
 </head>
 <body>
   <div class="container">
-    <h1>Welcome Prep 2</h1>
+    <h1>Welcome prep 2</h1>
     <button onclick="showLessons()">Lessons</button>
-    <button onclick="showFreeLessons()">Free Lessons</button>
     <button onclick="showExams()">Exams</button>
 
     <div id="lessonsList"></div>
@@ -86,13 +88,14 @@
     <div id="videoContainer"></div>
 
     <div class="whatsapp-link">
-      📢 Join the <strong>Prep 2 WhatsApp Group</strong> for updates:<br>
-      <a href="https://chat.whatsapp.com/DlWnZOk0Q235w2NxTB4a07?mode=ac_t" target="_blank">
+      📢 Join the <strong>prep 2 WhatsApp Group</strong> for updates:<br>
+      <a href="https://chat.whatsapp.com/JI0NWEdTNPw6afLYRPAT4w?mode=ems_copy_c" target="_blank">
         Click here to join 💬
       </a>
     </div>
   </div>
 
+  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
   <script>
@@ -134,6 +137,26 @@
           });
         } else {
           container.innerHTML = 'No lessons found.';
+        }
+      });
+    }
+
+    function showExams() {
+      document.getElementById('examsList').innerHTML = 'Loading exams...';
+      document.getElementById('lessonsList').innerHTML = '';
+      db.ref('exams/2').once('value', snapshot => {
+        const data = snapshot.val();
+        const container = document.getElementById('examsList');
+        container.innerHTML = '';
+        if (data) {
+          Object.keys(data).forEach(name => {
+            const btn = document.createElement('button');
+            btn.textContent = name;
+            btn.onclick = () => window.open(data[name], '_blank');
+            container.appendChild(btn);
+          });
+        } else {
+          container.innerHTML = 'No exams found.';
         }
       });
     }
@@ -181,116 +204,22 @@
 
           const overlay = document.createElement('div');
           overlay.className = "transparent-cover";
-          wrapper.appendChild(overlay);
 
+          wrapper.appendChild(overlay);
           document.getElementById('videoContainer').innerHTML = '';
           document.getElementById('videoContainer').appendChild(wrapper);
 
           const log = {
-            studentName,
-            studentNumber,
+            studentName: localStorage.getItem('studentName'),
+            studentNumber: localStorage.getItem('studentNumber'),
             lessonName,
             codeUsed: code,
-            dateTime: new Date().toLocaleString(),
-            type: "lesson"
+            dateTime: new Date().toLocaleString()
           };
 
           db.ref(`watchedLessons/prep2/${parentNumber}/${code}`).set(log);
         } else {
           alert("❌ This code is invalid or already used.");
-        }
-      });
-    }
-
-    function showFreeLessons() {
-      document.getElementById('lessonsList').innerHTML = 'Loading free lessons...';
-      document.getElementById('examsList').innerHTML = '';
-      db.ref('free/prep2').once('value', snapshot => {
-        const data = snapshot.val();
-        const container = document.getElementById('lessonsList');
-        container.innerHTML = '';
-        if (data) {
-          Object.keys(data).forEach(name => {
-            const btn = document.createElement('button');
-            btn.textContent = name;
-            btn.onclick = () => playFreeVideo(name, data[name]);
-            container.appendChild(btn);
-          });
-        } else {
-          container.innerHTML = 'No free lessons found.';
-        }
-      });
-    }
-
-    function playFreeVideo(lessonName, videoUrl) {
-      const match = videoUrl.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^\s&]+)/);
-      const videoId = match ? match[1] : null;
-
-      if (!videoId) {
-        document.getElementById('videoContainer').innerHTML = `
-          <div style="color: red; font-weight: bold;">
-            ⚠️ Invalid YouTube link. Please check the URL format.
-          </div>
-        `;
-        return;
-      }
-
-      const iframe = document.createElement('iframe');
-      iframe.src = `https://www.youtube.com/embed/${videoId}?rel=0`;
-      iframe.allow = "autoplay; encrypted-media";
-      iframe.allowFullscreen = true;
-      const wrapper = document.createElement('div');
-      wrapper.className = "video-wrapper";
-      wrapper.appendChild(iframe);
-
-      const overlay = document.createElement('div');
-      overlay.className = "transparent-cover";
-      wrapper.appendChild(overlay);
-
-      document.getElementById('videoContainer').innerHTML = '';
-      document.getElementById('videoContainer').appendChild(wrapper);
-
-      const log = {
-        studentName: localStorage.getItem('studentName'),
-        studentNumber: localStorage.getItem('studentNumber'),
-        lessonName: lessonName,
-        codeUsed: "free",
-        dateTime: new Date().toLocaleString(),
-        type: "lesson"
-      };
-
-      db.ref(`watchedLessons/prep2/${parentNumber}/exam-${lessonName}`).set(log);
-    }
-
-    function showExams() {
-      document.getElementById('examsList').innerHTML = 'Loading exams...';
-      document.getElementById('lessonsList').innerHTML = '';
-      db.ref('exams/2').once('value', snapshot => {
-        const data = snapshot.val();
-        const container = document.getElementById('examsList');
-        container.innerHTML = '';
-        if (data) {
-          Object.keys(data).forEach(name => {
-            const btn = document.createElement('button');
-            btn.textContent = name;
-            btn.onclick = () => {
-              window.open(data[name], '_blank');
-
-              const log = {
-                studentName: localStorage.getItem('studentName'),
-                studentNumber: localStorage.getItem('studentNumber'),
-                lessonName: name,
-                codeUsed: "exam",
-                dateTime: new Date().toLocaleString(),
-                type: "exam"
-              };
-
-              db.ref(`watchedLessons/prep2/${parentNumber}/exam-${name}`).set(log);
-            };
-            container.appendChild(btn);
-          });
-        } else {
-          container.innerHTML = 'No exams found.';
         }
       });
     }

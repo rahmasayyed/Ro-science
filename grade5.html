@@ -2,6 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <!-- ✅ Favicon added -->
+  <link rel="icon" type="image/png" href="logo.png">
+  <link rel="apple-touch-icon" href="logo.png">
   <title>Grade 5 Page</title>
   <style>
     body {
@@ -78,7 +81,6 @@
   <div class="container">
     <h1>Welcome Grade 5</h1>
     <button onclick="showLessons()">Lessons</button>
-    <button onclick="showFreeLessons()">Free Lessons</button>
     <button onclick="showExams()">Exams</button>
 
     <div id="lessonsList"></div>
@@ -139,6 +141,26 @@
       });
     }
 
+    function showExams() {
+      document.getElementById('examsList').innerHTML = 'Loading exams...';
+      document.getElementById('lessonsList').innerHTML = '';
+      db.ref('exams/5').once('value', snapshot => {
+        const data = snapshot.val();
+        const container = document.getElementById('examsList');
+        container.innerHTML = '';
+        if (data) {
+          Object.keys(data).forEach(name => {
+            const btn = document.createElement('button');
+            btn.textContent = name;
+            btn.onclick = () => window.open(data[name], '_blank');
+            container.appendChild(btn);
+          });
+        } else {
+          container.innerHTML = 'No exams found.';
+        }
+      });
+    }
+
     function requestCodeAndPlay(lessonName, videoId) {
       const code = prompt("Enter your access code:");
       if (!code) return;
@@ -164,7 +186,10 @@
           iframe.allowFullscreen = true;
           iframe.style.display = "none";
 
-          iframe.onload = () => { iframe.style.display = "block"; };
+          iframe.onload = () => {
+            iframe.style.display = "block";
+          };
+
           iframe.onerror = () => {
             document.getElementById('videoContainer').innerHTML = `
               <div style="color: red; font-weight: bold;">
@@ -179,116 +204,22 @@
 
           const overlay = document.createElement('div');
           overlay.className = "transparent-cover";
-          wrapper.appendChild(overlay);
 
+          wrapper.appendChild(overlay);
           document.getElementById('videoContainer').innerHTML = '';
           document.getElementById('videoContainer').appendChild(wrapper);
 
           const log = {
-            studentName,
-            studentNumber,
+            studentName: localStorage.getItem('studentName'),
+            studentNumber: localStorage.getItem('studentNumber'),
             lessonName,
             codeUsed: code,
-            dateTime: new Date().toLocaleString(),
-            type: "lesson"
+            dateTime: new Date().toLocaleString()
           };
 
           db.ref(`watchedLessons/grade5/${parentNumber}/${code}`).set(log);
         } else {
           alert("❌ This code is invalid or already used.");
-        }
-      });
-    }
-
-    function showFreeLessons() {
-      document.getElementById('lessonsList').innerHTML = 'Loading free lessons...';
-      document.getElementById('examsList').innerHTML = '';
-      db.ref('free/grade5').once('value', snapshot => {
-        const data = snapshot.val();
-        const container = document.getElementById('lessonsList');
-        container.innerHTML = '';
-        if (data) {
-          Object.keys(data).forEach(name => {
-            const btn = document.createElement('button');
-            btn.textContent = name;
-            btn.onclick = () => playFreeVideo(name, data[name]);
-            container.appendChild(btn);
-          });
-        } else {
-          container.innerHTML = 'No free lessons found.';
-        }
-      });
-    }
-
-    function playFreeVideo(lessonName, videoUrl) {
-      const match = videoUrl.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^\s&]+)/);
-      const videoId = match ? match[1] : null;
-      if (!videoId) {
-        document.getElementById('videoContainer').innerHTML = `
-          <div style="color: red; font-weight: bold;">
-            ⚠️ Invalid YouTube link. Please check the URL format.
-          </div>
-        `;
-        return;
-      }
-
-      const iframe = document.createElement('iframe');
-      iframe.src = `https://www.youtube.com/embed/${videoId}?rel=0`;
-      iframe.allow = "autoplay; encrypted-media";
-      iframe.allowFullscreen = true;
-
-      const wrapper = document.createElement('div');
-      wrapper.className = "video-wrapper";
-      wrapper.appendChild(iframe);
-
-      const overlay = document.createElement('div');
-      overlay.className = "transparent-cover";
-      wrapper.appendChild(overlay);
-
-      document.getElementById('videoContainer').innerHTML = '';
-      document.getElementById('videoContainer').appendChild(wrapper);
-
-      const log = {
-        studentName,
-        studentNumber,
-            lessonName,
-        codeUsed: "free",
-        dateTime: new Date().toLocaleString(),
-        type: "free"
-      };
-
-      db.ref(`watchedLessons/grade5/${parentNumber}/free-${lessonName}`).set(log);
-    }
-
-    function showExams() {
-      document.getElementById('examsList').innerHTML = 'Loading exams...';
-      document.getElementById('lessonsList').innerHTML = '';
-      db.ref('exams/5').once('value', snapshot => {
-        const data = snapshot.val();
-        const container = document.getElementById('examsList');
-        container.innerHTML = '';
-        if (data) {
-          Object.keys(data).forEach(name => {
-            const btn = document.createElement('button');
-            btn.textContent = name;
-            btn.onclick = () => {
-              window.open(data[name], '_blank');
-
-              const log = {
-                studentName,
-                studentNumber,
-                lessonName: name,
-                codeUsed: "exam",
-                dateTime: new Date().toLocaleString(),
-                type: "exam"
-              };
-
-              db.ref(`watchedLessons/grade5/${parentNumber}/exam-${name}`).set(log);
-            };
-            container.appendChild(btn);
-          });
-        } else {
-          container.innerHTML = 'No exams found.';
         }
       });
     }
